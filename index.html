@@ -5,6 +5,7 @@
   <title>CRM для записи звонков</title>
   <link href="https://fonts.googleapis.com/css?family=Inter:400,600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.2/css/all.min.css">
+  <link rel="stylesheet" href="./styles.css">
   <style>
     :root {
       --primary: #5F99F7;
@@ -90,24 +91,98 @@
       letter-spacing: 0.01em;
       padding-left: 3px;
     }
-    input[type="tel"] {
-      font-size: 1.23rem;
-      padding: 15px 19px;
-      border-radius: 16px;
-      border: none;
+    /* ==== BEAUTIFIED, ANIMATED PHONE INPUT ==== */
+    .input-anim-group {
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      position: relative;
+      margin-bottom: 6px;
+    }
+    .input-anim-label {
+      position: absolute;
+      left: 20px;
+      top: 18px;
+      font-size: 1.19rem;
+      color: #9cb2d5;
+      letter-spacing: 0.03em;
+      pointer-events: none;
+      background: transparent;
+      transition: transform .22s cubic-bezier(.53,.19,.19,1.12), color .22s;
+      z-index: 2;
+      padding: 0 2px;
+      font-weight: 500;
+    }
+    .input-anim-focused .input-anim-label,
+    .input-anim-filled .input-anim-label {
+      transform: translateY(-13px) scale(0.88);
+      color: var(--primary);
+      background: var(--secondary);
+      font-size: 0.97rem;
+      padding: 0 4px;
+      box-shadow: 0 1px 3px 0 #e5eefa33;
+      border-radius: 5px;
+      font-weight: 600;
+    }
+    .input-anim-inp {
+      font-size: 1.18rem;
+      padding: 17px 20px 13px 20px;
+      border-radius: 17px;
+      border: 2px solid #e3eaf7;
       background: #f3f7fe;
-      box-shadow: 0px 1px 6px 0 #e5ecf8 inset;
+      box-shadow: 0 2px 10px 0 #e1edfa25 inset;
       outline: none;
-      transition: box-shadow .18s, background .14s;
+      transition: border-color .24s, box-shadow .17s, background .17s;
       color: var(--accent);
       letter-spacing: 0.065em;
       font-variant-numeric: tabular-nums;
       font-family: inherit;
       width: 100%;
+      z-index: 1;
+      position: relative;
+      min-height: 56px;
     }
-    input[type="tel"]:focus {
-      box-shadow: 0 2px 12px 0 #dbe7fb inset;
-      background: #e4eefc;
+    .input-anim-inp:focus {
+      border-color: var(--primary);
+      background: #f2f8ff;
+      box-shadow: 0 3px 12px 0 #ddeffe99 inset;
+    }
+    .input-anim-group .input-anim-focusbar {
+      content: '';
+      position: absolute;
+      left: 17px;
+      right: 17px;
+      bottom: 11px;
+      height: 2px;
+      border-radius: 1.5px;
+      background: linear-gradient(90deg,var(--primary) 50%,var(--success) 80%);
+      opacity: 0;
+      transform: scaleX(.85);
+      pointer-events: none;
+      transition: opacity .22s, transform .22s cubic-bezier(.42,1.9,.47,1.19);
+      z-index: 3;
+    }
+    .input-anim-focused .input-anim-focusbar {
+      opacity: 1;
+      transform: scaleX(1.04);
+      animation: focusLineAnim 0.40s cubic-bezier(.7,0,.47,1.23);
+    }
+    @keyframes focusLineAnim {
+      0% { opacity: 0; transform: scaleX(0.6);}
+      60% { opacity: 1; transform: scaleX(1.08);}
+      100% { opacity: 1; transform: scaleX(1.04);}
+    }
+    .input-anim-inp:disabled {
+      opacity: 0.65;
+      background: #ebedf5;
+      color: #b5bed7;
+      border-color: #dbe0ed;
+    }
+    @media (max-width: 700px) {
+      .input-anim-inp, .input-anim-label { font-size: 1.04rem;}
+    }
+    @media (max-width: 480px) {
+      .input-anim-inp, .input-anim-label { font-size: 0.99rem;}
     }
     .form-actions {
       display: flex;
@@ -306,24 +381,27 @@
       <i class="fas fa-phone-volume"></i> Звонки клиентам
     </div>
     <!-- Экспорт в Excel: кнопка -->
-    <div style="display:flex;justify-content:flex-end;padding:11px 24px 6px 24px;gap:9px;">
-      <button id="export-excel-btn" type="button" style="max-width:220px;display:flex;align-items:center;gap:8px;background:var(--success);color:#fff;font-size:1.05rem;padding:10px 18px;border-radius:12px;border:none;box-shadow:0 1px 8px 0 rgba(65,199,122,0.09);font-weight:600;cursor:pointer;">
+    <div class="export-btn-bar">
+      <button id="export-excel-btn" type="button" class="excel-btn">
         <i class="fas fa-file-excel"></i> Скачать Excel
       </button>
     </div>
     <form id="call-form" autocomplete="off">
-      <input
-        type="tel"
-        id="phone-input"
-        placeholder="00 000 0000"
-        maxlength="11"
-        inputmode="tel"
-        pattern="(9\d)\s(\d{3})\s(\d{4})"
-        required
-        aria-label="Введите таджикский номер клиента"
-      >
-      <div class="phone-mask-comment">Формат: <strong>00 000 0000</strong> (Таджикистан)</div>
-      <div id="result-options" class="form-actions" style="gap:13px">
+      <div class="input-anim-group" id="input-anim-group">
+        <input
+          type="text"
+          id="phone-input"
+          class="input-anim-inp"
+          maxlength="25"
+          inputmode="text"
+          required
+          aria-label="Введите номер клиента"
+        >
+        <span class="input-anim-label">Номер клиента</span>
+        <div class="input-anim-focusbar"></div>
+      </div>
+      <div class="phone-mask-comment">Введите любой номер (без ограничений по формату)</div>
+      <div id="result-options" class="form-actions">
         <div class="call-result-option" data-result="buy"><i class="fas fa-check-circle"></i> Купит</div>
         <div class="call-result-option" data-result="no-buy"><i class="fas fa-times-circle"></i> Не купит</div>
         <div class="call-result-option" data-result="maybe"><i class="fas fa-calendar-check"></i> Сказал, что придёт</div>
@@ -342,233 +420,6 @@
       }
     }
   </script>
-  <script type="module">
-    import anime from "animejs";
-    import * as XLSX from "xlsx";
-
-    // --- Data & Persistence ---
-    const STORAGE_KEY = "crm-calls";
-    let calls = [];
-
-    function saveCalls() {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(calls));
-    }
-    function loadCalls() {
-      try {
-        const arr = JSON.parse(localStorage.getItem(STORAGE_KEY));
-        return Array.isArray(arr) ? arr : [];
-      } catch {
-        return [];
-      }
-    }
-    // --- Utility ---
-    function formatDate(date) {
-      const d = new Date(date);
-      const options = { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' };
-      return d.toLocaleString('ru-RU', options).replace(',', '');
-    }
-    function getResultDesc(result) {
-      switch(result){
-        case 'buy': return "Купит";
-        case 'no-buy': return "Не купит";
-        case 'maybe': return "Сказал, что придет";
-        default: return '';
-      }
-    }
-    function getResultIcon(result){
-      switch(result){
-        case 'buy': return '<i class="fas fa-check-circle"></i>';
-        case 'no-buy': return '<i class="fas fa-times-circle"></i>';
-        case 'maybe': return '<i class="fas fa-calendar-check"></i>';
-        default: return '';
-      }
-    }
-    // --- Anim & UI ---
-    function animateCard(el) {
-      anime({
-        targets: el,
-        scale: [0.97, 1],
-        opacity: [0, 1],
-        easing: 'easeOutBack',
-        duration: 480
-      });
-    }
-    function blinkOption(el) {
-      anime({
-        targets: el,
-        scale: [1, 1.12, 1],
-        duration: 370,
-        easing: 'easeOutCubic'
-      });
-    }
-    // --- Render logic ---
-    function renderCalls() {
-      const list = document.getElementById('calls-list');
-      list.innerHTML = '';
-      if(calls.length === 0) {
-        list.innerHTML = `<div class="empty-state"><i class="fas fa-inbox"></i><br>Пока нет звонков</div>`;
-        return;
-      }
-      calls.slice().reverse().forEach((call, idx) => {
-        const card = document.createElement('div');
-        card.className = "call-card";
-        card.style.animationDelay = (idx * 0.07) + "s";
-        card.innerHTML = `
-          <button class="delete-btn" title="Удалить"><i class="fas fa-trash"></i></button>
-          <div class="call-number">${call.phone}</div>
-          <div class="call-date">${formatDate(call.date)}</div>
-          <div class="call-result-label" data-result="${call.result}">
-            ${getResultIcon(call.result)}
-            ${getResultDesc(call.result)}
-          </div>
-        `;
-        // Remove handler
-        card.querySelector('.delete-btn').onclick = () => {
-          const idxToDelete = calls.length-1 - idx;
-          calls.splice(idxToDelete,1);
-          saveCalls();
-          anime({
-            targets: card,
-            opacity: [1,0],
-            scale: [1,0.88],
-            duration: 230,
-            easing: 'easeOutCubic',
-            complete: renderCalls
-          });
-        };
-        list.appendChild(card);
-        animateCard(card);
-      });
-    }
-    // --- Result Option Logic ---
-    let selectedResult = null;
-    document.querySelectorAll('.call-result-option').forEach(opt => {
-      opt.addEventListener('click', () => {
-        selectedResult = opt.dataset.result;
-        document.querySelectorAll('.call-result-option').forEach(el =>
-          el.classList.toggle('selected', el.dataset.result===selectedResult)
-        );
-        blinkOption(opt);
-      });
-    });
-    // --- Form Logic ---
-    document.getElementById('call-form').onsubmit = (e) => {
-      e.preventDefault();
-      const phone = document.getElementById('phone-input').value.trim();
-      // Check mask: "00 000 0000"
-      if(!/^[0-9]{2}\s[0-9]{3}\s[0-9]{4}$/.test(phone)) {
-        document.getElementById('phone-input').style.background = "#ffe8e8";
-        anime({
-          targets: '#phone-input',
-          translateX: [
-            {value: -8, duration: 80},
-            {value: 8, duration: 80},
-            {value: 0, duration: 80}
-          ],
-          easing: 'easeInOutQuad'
-        });
-        setTimeout(()=>
-          document.getElementById('phone-input').style.background="#f3f7fe", 430
-        );
-        return false;
-      }
-      if(!selectedResult) {
-        anime({
-          targets: '#result-options',
-          scale: [1,1.08,1],
-          background: [
-            {value: "#ffcfcf", duration: 80},
-            {value: "#fff", duration: 200}
-          ],
-          easing: 'easeOutCubic'
-        });
-        return false;
-      }
-      calls.push({phone, result: selectedResult, date: new Date().toISOString()});
-      saveCalls();
-      renderCalls();
-      // Reset form
-      e.target.reset();
-      selectedResult = null;
-      document.querySelectorAll('.call-result-option').forEach(el => el.classList.remove('selected'));
-    };
-    // --- Excel export functionality ---
-    document.getElementById("export-excel-btn").onclick = () => {
-      if (calls.length === 0) {
-        anime({
-          targets: "#export-excel-btn",
-          scale: [1, 1.08, 1],
-          background: [
-            {value: "#ffe8e8", duration: 80},
-            {value: "#41C77A", duration: 200}
-          ],
-          easing: "easeOutCubic"
-        });
-        return;
-      }
-
-      // Prepare data for export
-      const exportData = calls.map((call, i) => ({
-        "№": i + 1,
-        "Телефон": call.phone,
-        "Результат": getResultDesc(call.result),
-        "Дата": formatDate(call.date)
-      }));
-
-      // Create worksheet & workbook
-      const ws = XLSX.utils.json_to_sheet(exportData);
-      const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, "Звонки");
-
-      // Create buffer and download
-      const wbout = XLSX.write(wb, {bookType:'xlsx', type:'array'});
-      const blob = new Blob([wbout], {type: "application/octet-stream"});
-      const a = document.createElement("a");
-      a.href = URL.createObjectURL(blob);
-      a.download = "calls.xlsx";
-      document.body.appendChild(a);
-      a.click();
-      setTimeout(()=>{
-        document.body.removeChild(a);
-        URL.revokeObjectURL(a.href);
-      }, 120);
-    };
-
-    // --- Tajikistan Phone Mask ---
-    const phoneInput = document.getElementById('phone-input');
-
-    phoneInput.addEventListener('input', function(e){
-      // Only allow digits, show as: 00 000 0000
-      let only = this.value.replace(/\D/g,'').slice(0,9); // only digits, max 9 digits
-      let masked = '';
-      // Always show as xx xxx xxxx
-      if (only.length > 0) {
-        masked += only.slice(0,2);
-      }
-      if (only.length >= 3) {
-        masked += ' ' + only.slice(2,5);
-      }
-      if (only.length >= 6) {
-        masked += ' ' + only.slice(5,9);
-      }
-      this.value = masked.trim();
-    });
-
-    // Paste handling for the right mask (removes garbage, applies Tajik template)
-    phoneInput.addEventListener('paste', function(e){
-      e.preventDefault();
-      let text = (e.clipboardData || window.clipboardData).getData('text');
-      let digits = text.replace(/\D/g, '').slice(0,9);
-      let masked = '';
-      if(digits.length > 0) masked += digits.slice(0,2);
-      if(digits.length >= 3) masked += ' ' + digits.slice(2,5);
-      if(digits.length >= 6) masked += ' ' + digits.slice(5,9);
-      this.value = masked.trim();
-    });
-
-    // --- Init ---
-    calls = loadCalls();
-    renderCalls();
-  </script>
+  <script type="module" src="./main.js"></script>
 </body>
 </html>
