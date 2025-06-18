@@ -1,0 +1,574 @@
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>CRM для записи звонков</title>
+  <link href="https://fonts.googleapis.com/css?family=Inter:400,600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.2/css/all.min.css">
+  <style>
+    :root {
+      --primary: #5F99F7;
+      --secondary: #fff;
+      --accent: #24304A;
+      --success: #41C77A;
+      --danger: #ff6464;
+      --warning: #ffae42;
+      --bg: #f4f8fc;
+      --shadow: 0 2px 18px 0 rgba(30,44,86,0.13);
+      --radius: 22px;
+    }
+    html, body {
+      background: var(--bg);
+      font-family: 'Inter', sans-serif;
+      margin: 0; padding: 0;
+      min-height: 100vh;
+      color: var(--accent);
+      overscroll-behavior-y: none;
+      height: 100%;
+    }
+    body {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      min-height: 100vh;
+    }
+    .crm-app {
+      background: var(--secondary);
+      box-shadow: var(--shadow);
+      border-radius: var(--radius);
+      width: 100%;
+      max-width: 520px;
+      min-height: 720px;
+      padding: 0;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      margin: 24px 0;
+    }
+    .crm-header {
+      background: var(--primary);
+      color: #fff;
+      padding: 38px 32px 26px 32px;
+      font-size: 1.6rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      text-align: center;
+      position: relative;
+      z-index: 2;
+      box-shadow: 0 2px 12px 0 rgba(95,153,247,0.10);
+      border-bottom-left-radius: var(--radius);
+      border-bottom-right-radius: var(--radius);
+      animation: headerBounce 0.7s cubic-bezier(.33,1.29,.76,1.01) backwards;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 12px;
+    }
+    @keyframes headerBounce {
+      0% {transform: translateY(-70px); opacity: 0;}
+      100% {transform: none; opacity: 1;}
+    }
+    form#call-form {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      padding: 24px 32px 14px 32px;
+      animation: formAppear 0.9s cubic-bezier(.33,1.29,.76,1.01) 0.12s backwards;
+      margin-bottom: 8px;
+    }
+    @keyframes formAppear {
+      0% {transform: translateY(30px); opacity: 0;}
+      100% {transform: none; opacity: 1;}
+    }
+    .phone-mask-comment {
+      color: #9cb2d5;
+      font-size: 0.96rem;
+      margin-top: -7px;
+      margin-bottom: 5px;
+      letter-spacing: 0.01em;
+      padding-left: 3px;
+    }
+    input[type="tel"] {
+      font-size: 1.23rem;
+      padding: 15px 19px;
+      border-radius: 16px;
+      border: none;
+      background: #f3f7fe;
+      box-shadow: 0px 1px 6px 0 #e5ecf8 inset;
+      outline: none;
+      transition: box-shadow .18s, background .14s;
+      color: var(--accent);
+      letter-spacing: 0.065em;
+      font-variant-numeric: tabular-nums;
+      font-family: inherit;
+      width: 100%;
+    }
+    input[type="tel"]:focus {
+      box-shadow: 0 2px 12px 0 #dbe7fb inset;
+      background: #e4eefc;
+    }
+    .form-actions {
+      display: flex;
+      gap: 13px;
+      justify-content: stretch;
+    }
+    button, .call-result-option {
+      font-size: 1.10rem;
+      font-weight: 500;
+      padding: 13px 0;
+      border: none;
+      border-radius: 14px;
+      cursor: pointer;
+      transition: background .23s, transform .14s;
+      box-shadow: 0 1px 7px 0 rgba(95,153,247,0.07);
+      background: var(--primary);
+      color: #fff;
+      flex: 1;
+      min-width: 0;
+    }
+    .call-result-option {
+      margin-top: 10px;
+      background: #ebf5fe;
+      color: var(--primary);
+      font-weight: 600;
+      border: 2px solid var(--primary);
+      box-shadow: 0 1px 6px 0 rgba(95,153,247,0.06);
+      transition: background .16s, color .16s, border-color 0.18s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      letter-spacing: 0.01em;
+      min-height: 45px;
+    }
+    .call-result-option[data-result="buy"] {
+      border-color: var(--success);
+      color: var(--success);
+    }
+    .call-result-option[data-result="no-buy"] {
+      border-color: var(--danger);
+      color: var(--danger);
+    }
+    .call-result-option[data-result="maybe"] {
+      border-color: var(--warning);
+      color: var(--warning);
+    }
+    .call-result-option.selected, .call-result-option:active {
+      background: var(--primary);
+      color: #fff !important;
+      border-color: var(--primary);
+    }
+    button:active {
+      transform: scale(0.97);
+    }
+    .calls-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 0 14px 18px 14px;
+      margin-top: 7px;
+      animation: listFadeIn 1.2s .2s both;
+    }
+    @keyframes listFadeIn {
+      0% {opacity: 0; transform: translateY(50px);}
+      100% {opacity: 1; transform: none;}
+    }
+    .call-card {
+      background: #fff;
+      border-radius: 16px;
+      margin: 13px 0;
+      padding: 17px 22px 13px 22px;
+      box-shadow: 0 2px 16px 0 rgba(30,44,86,0.06);
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+      transition: transform .13s;
+      animation: cardPopIn 0.50s cubic-bezier(.23,1.29,.66,1.01) backwards;
+      font-size: 1.09rem;
+      position: relative;
+    }
+    .call-card .call-number {
+      font-weight: 700;
+      font-size: 1.10rem;
+      letter-spacing: 0.05em;
+      padding-bottom: 2px;
+      color: var(--accent);
+    }
+    .call-card .call-date {
+      font-size: 0.98rem;
+      color: #8597b6;
+      letter-spacing: 0.01em;
+    }
+    .call-card .call-result-label {
+      margin-top: 2px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 1.06rem;
+      font-weight: 500;
+    }
+    .call-card .call-result-label[data-result="buy"] {
+      color: var(--success);
+    }
+    .call-card .call-result-label[data-result="no-buy"] {
+      color: var(--danger);
+    }
+    .call-card .call-result-label[data-result="maybe"] {
+      color: var(--warning);
+    }
+    .call-card .delete-btn {
+      background: transparent;
+      border: none;
+      color: #d3d8ea;
+      font-size: 1.31rem;
+      margin-left: auto;
+      margin-top: -8px;
+      margin-bottom: 3px;
+      margin-right: -8px;
+      cursor: pointer;
+      transition: color .17s, transform .13s;
+      position: absolute;
+      right: 7px; top: 7px;
+      z-index: 5;
+      padding: 5px 7px;
+    }
+    .call-card .delete-btn:hover, .call-card .delete-btn:active {
+      color: var(--danger);
+      transform: scale(1.15);
+    }
+    .empty-state {
+      text-align: center;
+      color: #b8c7e1;
+      padding: 64px 0 28px 0;
+      font-size: 1.15rem;
+      opacity: 0.86;
+      letter-spacing: 0.01em;
+      animation: emptyBlink 1.4s 0.2s both;
+    }
+    @keyframes cardPopIn {
+      0% {opacity:0; transform: scale(0.97) translateY(60px);}
+      100% {opacity:1; transform: none;}
+    }
+    @keyframes emptyBlink {
+      0% {opacity: 0;}
+      100% {opacity: 0.86;}
+    }
+    @media (max-width: 700px) {
+      .crm-app {
+        max-width: 98vw;
+        min-height: 100vh;
+        border-radius: 0;
+        margin: 0;
+      }
+      .crm-header,
+      form#call-form {
+        padding-left: 14px;
+        padding-right: 14px;
+      }
+      .calls-list {
+        padding-left: 2px;
+        padding-right: 2px;
+      }
+    }
+    @media (max-width: 480px) {
+      .crm-header {
+        font-size: 1.13rem;
+        padding: 20px 8px 17px 8px;
+      }
+      form#call-form {
+        padding: 12px 9px 10px 9px;
+        gap: 10px;
+      }
+      .call-card {
+        padding-left: 8px;
+        padding-right: 8px;
+      }
+      .calls-list {
+        padding-top: 2px;
+        padding-bottom: 8px;
+      }
+    }
+    /* Hide Chrome autofill yellow bg */
+    input:-webkit-autofill,
+    input:-webkit-autofill:hover,
+    input:-webkit-autofill:focus {
+      box-shadow: 0 0 0 1000px #f3f7fe inset !important;
+      -webkit-box-shadow: 0 0 0 1000px #f3f7fe inset !important;
+      -webkit-text-fill-color: var(--accent) !important;
+      transition: background-color 5000s ease-in-out 0s;
+    }
+  </style>
+</head>
+<body>
+  <div class="crm-app">
+    <div class="crm-header">
+      <i class="fas fa-phone-volume"></i> Звонки клиентам
+    </div>
+    <!-- Экспорт в Excel: кнопка -->
+    <div style="display:flex;justify-content:flex-end;padding:11px 24px 6px 24px;gap:9px;">
+      <button id="export-excel-btn" type="button" style="max-width:220px;display:flex;align-items:center;gap:8px;background:var(--success);color:#fff;font-size:1.05rem;padding:10px 18px;border-radius:12px;border:none;box-shadow:0 1px 8px 0 rgba(65,199,122,0.09);font-weight:600;cursor:pointer;">
+        <i class="fas fa-file-excel"></i> Скачать Excel
+      </button>
+    </div>
+    <form id="call-form" autocomplete="off">
+      <input
+        type="tel"
+        id="phone-input"
+        placeholder="00 000 0000"
+        maxlength="11"
+        inputmode="tel"
+        pattern="(9\d)\s(\d{3})\s(\d{4})"
+        required
+        aria-label="Введите таджикский номер клиента"
+      >
+      <div class="phone-mask-comment">Формат: <strong>00 000 0000</strong> (Таджикистан)</div>
+      <div id="result-options" class="form-actions" style="gap:13px">
+        <div class="call-result-option" data-result="buy"><i class="fas fa-check-circle"></i> Купит</div>
+        <div class="call-result-option" data-result="no-buy"><i class="fas fa-times-circle"></i> Не купит</div>
+        <div class="call-result-option" data-result="maybe"><i class="fas fa-calendar-check"></i> Сказал, что придёт</div>
+      </div>
+      <button type="submit"><i class="fas fa-plus"></i> Записать звонок</button>
+    </form>
+    <div class="calls-list" id="calls-list">
+      <!-- Список звонков появится здесь -->
+    </div>
+  </div>
+  <script type="importmap">
+    {
+      "imports": {
+        "animejs": "https://cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.es.js",
+        "xlsx": "https://cdn.jsdelivr.net/npm/xlsx@0.18.5/+esm"
+      }
+    }
+  </script>
+  <script type="module">
+    import anime from "animejs";
+    import * as XLSX from "xlsx";
+
+    // --- Data & Persistence ---
+    const STORAGE_KEY = "crm-calls";
+    let calls = [];
+
+    function saveCalls() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(calls));
+    }
+    function loadCalls() {
+      try {
+        const arr = JSON.parse(localStorage.getItem(STORAGE_KEY));
+        return Array.isArray(arr) ? arr : [];
+      } catch {
+        return [];
+      }
+    }
+    // --- Utility ---
+    function formatDate(date) {
+      const d = new Date(date);
+      const options = { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' };
+      return d.toLocaleString('ru-RU', options).replace(',', '');
+    }
+    function getResultDesc(result) {
+      switch(result){
+        case 'buy': return "Купит";
+        case 'no-buy': return "Не купит";
+        case 'maybe': return "Сказал, что придет";
+        default: return '';
+      }
+    }
+    function getResultIcon(result){
+      switch(result){
+        case 'buy': return '<i class="fas fa-check-circle"></i>';
+        case 'no-buy': return '<i class="fas fa-times-circle"></i>';
+        case 'maybe': return '<i class="fas fa-calendar-check"></i>';
+        default: return '';
+      }
+    }
+    // --- Anim & UI ---
+    function animateCard(el) {
+      anime({
+        targets: el,
+        scale: [0.97, 1],
+        opacity: [0, 1],
+        easing: 'easeOutBack',
+        duration: 480
+      });
+    }
+    function blinkOption(el) {
+      anime({
+        targets: el,
+        scale: [1, 1.12, 1],
+        duration: 370,
+        easing: 'easeOutCubic'
+      });
+    }
+    // --- Render logic ---
+    function renderCalls() {
+      const list = document.getElementById('calls-list');
+      list.innerHTML = '';
+      if(calls.length === 0) {
+        list.innerHTML = `<div class="empty-state"><i class="fas fa-inbox"></i><br>Пока нет звонков</div>`;
+        return;
+      }
+      calls.slice().reverse().forEach((call, idx) => {
+        const card = document.createElement('div');
+        card.className = "call-card";
+        card.style.animationDelay = (idx * 0.07) + "s";
+        card.innerHTML = `
+          <button class="delete-btn" title="Удалить"><i class="fas fa-trash"></i></button>
+          <div class="call-number">${call.phone}</div>
+          <div class="call-date">${formatDate(call.date)}</div>
+          <div class="call-result-label" data-result="${call.result}">
+            ${getResultIcon(call.result)}
+            ${getResultDesc(call.result)}
+          </div>
+        `;
+        // Remove handler
+        card.querySelector('.delete-btn').onclick = () => {
+          const idxToDelete = calls.length-1 - idx;
+          calls.splice(idxToDelete,1);
+          saveCalls();
+          anime({
+            targets: card,
+            opacity: [1,0],
+            scale: [1,0.88],
+            duration: 230,
+            easing: 'easeOutCubic',
+            complete: renderCalls
+          });
+        };
+        list.appendChild(card);
+        animateCard(card);
+      });
+    }
+    // --- Result Option Logic ---
+    let selectedResult = null;
+    document.querySelectorAll('.call-result-option').forEach(opt => {
+      opt.addEventListener('click', () => {
+        selectedResult = opt.dataset.result;
+        document.querySelectorAll('.call-result-option').forEach(el =>
+          el.classList.toggle('selected', el.dataset.result===selectedResult)
+        );
+        blinkOption(opt);
+      });
+    });
+    // --- Form Logic ---
+    document.getElementById('call-form').onsubmit = (e) => {
+      e.preventDefault();
+      const phone = document.getElementById('phone-input').value.trim();
+      // Check mask: "00 000 0000"
+      if(!/^[0-9]{2}\s[0-9]{3}\s[0-9]{4}$/.test(phone)) {
+        document.getElementById('phone-input').style.background = "#ffe8e8";
+        anime({
+          targets: '#phone-input',
+          translateX: [
+            {value: -8, duration: 80},
+            {value: 8, duration: 80},
+            {value: 0, duration: 80}
+          ],
+          easing: 'easeInOutQuad'
+        });
+        setTimeout(()=>
+          document.getElementById('phone-input').style.background="#f3f7fe", 430
+        );
+        return false;
+      }
+      if(!selectedResult) {
+        anime({
+          targets: '#result-options',
+          scale: [1,1.08,1],
+          background: [
+            {value: "#ffcfcf", duration: 80},
+            {value: "#fff", duration: 200}
+          ],
+          easing: 'easeOutCubic'
+        });
+        return false;
+      }
+      calls.push({phone, result: selectedResult, date: new Date().toISOString()});
+      saveCalls();
+      renderCalls();
+      // Reset form
+      e.target.reset();
+      selectedResult = null;
+      document.querySelectorAll('.call-result-option').forEach(el => el.classList.remove('selected'));
+    };
+    // --- Excel export functionality ---
+    document.getElementById("export-excel-btn").onclick = () => {
+      if (calls.length === 0) {
+        anime({
+          targets: "#export-excel-btn",
+          scale: [1, 1.08, 1],
+          background: [
+            {value: "#ffe8e8", duration: 80},
+            {value: "#41C77A", duration: 200}
+          ],
+          easing: "easeOutCubic"
+        });
+        return;
+      }
+
+      // Prepare data for export
+      const exportData = calls.map((call, i) => ({
+        "№": i + 1,
+        "Телефон": call.phone,
+        "Результат": getResultDesc(call.result),
+        "Дата": formatDate(call.date)
+      }));
+
+      // Create worksheet & workbook
+      const ws = XLSX.utils.json_to_sheet(exportData);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Звонки");
+
+      // Create buffer and download
+      const wbout = XLSX.write(wb, {bookType:'xlsx', type:'array'});
+      const blob = new Blob([wbout], {type: "application/octet-stream"});
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "calls.xlsx";
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(()=>{
+        document.body.removeChild(a);
+        URL.revokeObjectURL(a.href);
+      }, 120);
+    };
+
+    // --- Tajikistan Phone Mask ---
+    const phoneInput = document.getElementById('phone-input');
+
+    phoneInput.addEventListener('input', function(e){
+      // Only allow digits, show as: 00 000 0000
+      let only = this.value.replace(/\D/g,'').slice(0,9); // only digits, max 9 digits
+      let masked = '';
+      // Always show as xx xxx xxxx
+      if (only.length > 0) {
+        masked += only.slice(0,2);
+      }
+      if (only.length >= 3) {
+        masked += ' ' + only.slice(2,5);
+      }
+      if (only.length >= 6) {
+        masked += ' ' + only.slice(5,9);
+      }
+      this.value = masked.trim();
+    });
+
+    // Paste handling for the right mask (removes garbage, applies Tajik template)
+    phoneInput.addEventListener('paste', function(e){
+      e.preventDefault();
+      let text = (e.clipboardData || window.clipboardData).getData('text');
+      let digits = text.replace(/\D/g, '').slice(0,9);
+      let masked = '';
+      if(digits.length > 0) masked += digits.slice(0,2);
+      if(digits.length >= 3) masked += ' ' + digits.slice(2,5);
+      if(digits.length >= 6) masked += ' ' + digits.slice(5,9);
+      this.value = masked.trim();
+    });
+
+    // --- Init ---
+    calls = loadCalls();
+    renderCalls();
+  </script>
+</body>
+</html>
